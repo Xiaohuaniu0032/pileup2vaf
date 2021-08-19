@@ -16,6 +16,92 @@ def parse_args():
         AP.add_argument('-od',help="output dir",dest="outdir")
         return AP.parse_args()
 
+def parse_query(chrom,pos,ref,query):
+    '''
+    1.count depth
+    2.mismatch
+    3.ins
+    4.del
+    5.cal freq
+    '''
+    BASE = ['A','T','C','G']
+    #print(chrom,pos,ref)
+
+    dict_all = defaultdict(lambda:0)
+    for item in query:
+        dict_all[item.upper()] += 1
+
+    #print(dict_all)
+
+    dict_alt = defaultdict(lambda:0) # store alt info
+    
+    # check if homo-ref or alt
+    if dict_all.keys() == 1:
+        if dict_all.keys()[0] == ref:
+            # ref-homo
+            alt = 'ref-homo'
+            var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+            dict_alt[var] = dict_all.values()[0]
+        elif dict_all.keys()[0] != ref:
+            # alt-homo
+            alt = dict_all.keys()[0]
+            var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+            dict_alt[var] = dict_all.values()[0]
+        else:
+            pass
+    else:
+        # has >= two allels
+        for k in dict_all:
+        #print(k,ref)
+            if k.upper() == ref:
+                # skip ref
+                pass
+            else:
+                # alt base
+                if len(k) == 1:
+                    if k != '*':
+                        # SNV
+                        alt = k.upper()
+                        var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                        dict_alt[var] += dict_all[k]
+                elif k[1] == '+':
+                    # Ins
+                    # 'C+4TACT' => VCF record is: chr pos C CTACT
+                    # get alt allele
+                    alt_allele = []
+                    for i in k:
+                        if i in BASE:
+                            alt_allele.append(i.upper())
+
+                    alt = "".join(alt_allele)
+                    var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                    dict_alt[var] += dict_all[k]
+                elif k[1] == '-':
+                    # Del
+                    # 'G-1C' => VCF record is: chr pos GC G
+                    alt_allele = []
+                    for i in k:
+                        if i in BASE:
+                            alt_allele.append(i.upper())
+
+                    del_ref = "".join(alt_allele)
+                    del_alt = del_ref[1:]
+                    var = "%s\t%s\t%s\t%s" % (chrom,pos,del_ref,del_alt)
+                    dict_alt[var] += dict_all[k]
+                else:
+                    pass
+
+    #print(dict_alt)
+
+    return(dict_alt)
+
+def cal_depth(query):
+    depth = 0
+    for item in query:
+        depth += 1
+
+    return(depth)
+
 def main():
     options = parse_args()
     pysam_sam = pysam.AlignmentFile(options.bam,"rb")
@@ -34,7 +120,7 @@ def main():
     # output file
     outfile = "%s/%s.variants.xls" % (options.outdir,options.name)
     of = open(outfile,'w')
-    h = ['Chr','Pos','Ref','Alt','RefNum','AltNum','Depth','AlleleFrequency']
+    h = ['Chr','Pos','Ref','Alt','AltNum','Depth','AlleleFrequency']
     hh = '\t'.join(h)
     of.write(hh)
     of.write('\n')
@@ -46,58 +132,25 @@ def main():
             Note: 'all' reads which overlap the region are returned. The first base returned will be the first base of the first read ‘not’ necessarily the first base of the region used in the query. you need to specifiy the 'truncate' param
             '''
             # max depth = 8000X, mapQ = 30, baseQ = 10
-            querybase = pileupcol.get_query_sequences(mark_matches=False,mark_ends=False,add_indels=False)
-            #print("querybase is: %s" % (querybase))
+            querybase = pileupcol.get_query_sequences(mark_matches=False,mark_ends=False,add_indels=True)
+
+            # cal depth
+
             col = pileupcol.reference_pos + 1 # 1-based
             t_chr = t.split(":")[0]
+            #print(t_chr,col,querybase)
             reg = t_chr + ':' + str(col) + '-' + str(col) # chr1:2-2
             ref_base = pysam_fa.fetch(region=reg).upper() # ref base
-            #print(ref_base)
-            ref_n, alt_n = 0,0
-
-            all_n = 0
-            dict_all = defaultdict(lambda:0)
-            for base in querybase:
-                dict_all[base.upper()] += 1
-                all_n += 1
+            alt_dict = parse_query(t_chr,col,ref_base,querybase)
             
-            if all_n == 0:
-                # skip zero depth pos
-                continue
-            
-            #print("base info is: %s" % (dict_all))
+            depth = cal_depth(querybase)
 
-            # check if exists alt base
-            alt_base = []
-            ref_n = 0
-            for k in dict_all:
-                #print("base is: %s" % (k))
-                if k != ref_base: # has translated into upper
-                    alt_base.append(k)
-                if k == ref_base:
-                    ref_n += dict_all[k]
-
-            if len(alt_base) != 0:
-                for alt in alt_base:
-                    alt_n = dict_all[alt]
-                    alt_freq = round(alt_n/all_n,3)
-                    alt_freq = round(alt_n/all_n,3)
-                    if alt == '':
-                        # a del
-                        val = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (t_chr,col,ref_base,'-',ref_n,alt_n,all_n,alt_freq)
-                    else:
-                        # a mismatch
-                        val = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (t_chr,col,ref_base,alt,ref_n,alt_n,all_n,alt_freq)
-                    of.write(val)
-
-            else:
-                # homo ref
-                alt_n = 0
-                alt_freq = 0
-                alt = 'homo-ref'
-                val = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (t_chr,col,ref_base,alt,ref_n,alt_n,all_n,alt_freq)
-                of.write(val)
-    
+            # output all alt allele
+            for k in alt_dict:
+                alt_n = alt_dict[k]
+                freq = round(alt_n/depth,3)
+                v = "%s\t%s\t%s\t%s" % (k,alt_n,depth,freq)
+                of.write(v+'\n')
     of.close()
 
 if __name__ == "__main__":
