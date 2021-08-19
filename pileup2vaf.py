@@ -27,28 +27,33 @@ def parse_query(chrom,pos,ref,query):
     BASE = ['A','T','C','G']
     #print(chrom,pos,ref)
 
-    dict_all = defaultdict(lambda:0)
+    dict_all_temp = defaultdict(lambda:0)
     for item in query:
-        dict_all[item.upper()] += 1
+        dict_all_temp[item.upper()] += 1
+
+    dict_all = {}
+    for k,v in dict_all_temp.items():
+        dict_all[k] = v
 
     #print(dict_all)
 
     dict_alt = defaultdict(lambda:0) # store alt info
-    
+    #print(dict_all.keys())
     # check if homo-ref or alt
-    if dict_all.keys() == 1:
-        if dict_all.keys()[0] == ref:
-            # ref-homo
-            alt = 'ref-homo'
-            var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
-            dict_alt[var] = dict_all.values()[0]
-        elif dict_all.keys()[0] != ref:
-            # alt-homo
-            alt = dict_all.keys()[0]
-            var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
-            dict_alt[var] = dict_all.values()[0]
-        else:
-            pass
+    if len(dict_all.keys()) == 1:
+        for k,v in dict_all.items():
+            if k == ref:
+                # ref-homo
+                alt = 'ref-homo'
+                var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                dict_alt[var] = v
+            elif k != ref:
+                # alt-homo
+                alt = k
+                var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                dict_alt[var] = v
+            else:
+                pass
     else:
         # has >= two allels
         for k in dict_all:
