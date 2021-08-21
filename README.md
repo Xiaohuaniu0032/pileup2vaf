@@ -23,11 +23,17 @@ optional arguments:
 `-bam`: input bam file
 
 `-bed`: BED file
+
 `-fa` : reference fasta file
+
 `-d`  : max depth limit, same as samtools mpileup. default: 8000
+
 `-n`  : sample name
+
 `-mq` : mapping quailty cutoff. default: 0
+
 `-bq` : base quality. default: 0
+
 `-od` : output dir
 
 
