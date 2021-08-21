@@ -90,7 +90,7 @@ def parse_query(chrom,pos,ref,query):
                             alt_allele.append(i.upper())
 
                     del_ref = "".join(alt_allele)
-                    del_alt = del_ref[1:]
+                    del_alt = del_ref[0]
                     var = "%s\t%s\t%s\t%s" % (chrom,pos,del_ref,del_alt)
                     dict_alt[var] += dict_all[k]
                 else:
