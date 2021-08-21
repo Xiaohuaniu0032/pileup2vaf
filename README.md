@@ -21,6 +21,7 @@ optional arguments:
   -od OUTDIR  output dir
 ```
 `-bam`: input bam file
+
 `-bed`: BED file
 `-fa` : reference fasta file
 `-d`  : max depth limit, same as samtools mpileup. default: 8000
