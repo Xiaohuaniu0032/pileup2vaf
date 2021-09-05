@@ -42,13 +42,13 @@ The outfile is `<sample_name>.variants.xls`
 
 # Outfile Format
 ```
-Chr     Pos     Ref     Alt     AltNum  Depth   AlleleFrequency
-chr12   52380364        T       ref-homo        55      55      1.0
-chr12   52380365        T       C       1       56      0.018
-chr12   52380366        A       ref-homo        56      56      1.0
-chr12   52380623        TGATGA  T       257     1702    0.151
-chrX    48649699        C       CTACT   111     556     0.2
+Chr     Pos             Ref         Alt          AltNum      Depth      AltAlleleFrequency
+chr12   52380364        T           ref-homo     0           24         0.0     
+chr12   52380365        T           C            1           24         0.042
+chr12   52380366        A           ref-homo     0           24         0.0
+chr12   52380623        TGATGA      T            90          582        0.155
+chrX    48649699        C           CTACT        30          155        0.194
 ```
 
 # Dependency
-1. pysam
+1) pysam
