@@ -46,7 +46,7 @@ def parse_query(chrom,pos,ref,query):
                 # ref-homo
                 alt = 'ref-homo'
                 var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
-                dict_alt[var] = v
+                dict_alt[var] = 0
             elif k != ref:
                 # alt-homo
                 alt = k
@@ -125,7 +125,7 @@ def main():
     # output file
     outfile = "%s/%s.variants.xls" % (options.outdir,options.name)
     of = open(outfile,'w')
-    h = ['Chr','Pos','Ref','Alt','AltNum','Depth','AlleleFrequency']
+    h = ['Chr','Pos','Ref','Alt','AltNum','Depth','AltAlleleFrequency']
     hh = '\t'.join(h)
     of.write(hh)
     of.write('\n')
@@ -140,14 +140,12 @@ def main():
             querybase = pileupcol.get_query_sequences(mark_matches=False,mark_ends=False,add_indels=True)
 
             # cal depth
-
             col = pileupcol.reference_pos + 1 # 1-based
             t_chr = t.split(":")[0]
             #print(t_chr,col,querybase)
             reg = t_chr + ':' + str(col) + '-' + str(col) # chr1:2-2
             ref_base = pysam_fa.fetch(region=reg).upper() # ref base
             alt_dict = parse_query(t_chr,col,ref_base,querybase)
-            
             depth = cal_depth(querybase)
 
             # output all alt allele
