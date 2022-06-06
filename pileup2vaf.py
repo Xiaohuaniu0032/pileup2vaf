@@ -8,7 +8,7 @@ def parse_args():
         AP =  argparse.ArgumentParser("Detect snv and small indel using pysam pileup method")
         AP.add_argument('-bam',help="bam file",dest="bam")
         AP.add_argument('-bed',help="bed file",dest="bed")
-        AP.add_argument('-d',help='max depth',dest='depth',default=8000)
+        AP.add_argument('-d',help='max depth',dest='depth',default=100000)
         AP.add_argument('-n',help='samplel name',dest='name')
         AP.add_argument('-mq',help='map quality',dest='mapq',default=0)
         AP.add_argument('-bq',help='base quality',dest='baseq',default=0)
