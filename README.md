@@ -26,21 +26,28 @@ optional arguments:
 
 `-fa` : reference fasta file
 
-`-d`  : max depth limit, same as samtools mpileup. default: 8000
+`-d`  : max depth limit, same as samtools mpileup. [default: 8000]
 
 `-n`  : sample name
 
-`-mq` : mapping quailty cutoff. default: 0
+`-mq` : mapping quailty cutoff. [default: 0]
 
-`-bq` : base quality. default: 0
+`-bq` : base quality. [default: 0]
 
 `-od` : output dir
+
+# Test
+`less test/cmd.sh`
+
+```
+python3 ../pileup2vaf.py -bam $line -bed $bed -fa $fa -od $PWD -n $name
+```
 
 
 # Outfiles
 The outfile is `<sample_name>.variants.xls`
 
-# Outfile Format
+## Outfile Format
 ```
 Chr     Pos             Ref         Alt          AltNum      Depth      AltAlleleFrequency
 chr12   52380364        T           ref-homo     0           24         0.0     
@@ -50,5 +57,7 @@ chr12   52380623        TGATGA      T            90          582        0.155
 chrX    48649699        C           CTACT        30          155        0.194
 ```
 
+
 # Dependency
-1) pysam
+* Python3
+* Pysam
