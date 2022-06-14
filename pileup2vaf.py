@@ -24,23 +24,48 @@ def parse_query(chrom,pos,ref,query):
     4.del
     5.cal freq
     '''
+
+    '''
+    query format
+
+    HIV-1 1640 G 16 ['G', 'G', 'G', 'g', 'g', 'g', 'g', 'G', 'G', 'G', 'g', 'g', 'G', 'G', 'g', 'G']
+    {'G': 9, 'g': 7}
+    HIV-1 1641 A 16 ['A', 'A', 'A', 'a', 'a', 'g', 'a', 'A', 'A', 'A', 'a', 'g', 'A', 'A', 'a', 'A']
+    {'A': 9, 'a': 5, 'g': 2}
+    HIV-1 1642 A 16 ['G', 'G', 'G', 'g', 'g', 'a', 'g', 'A-1G', 'G', 'A', 'a', 'a', 'G', 'G', 'g', 'G']
+    {'G': 7, 'g': 4, 'a': 3, 'A-1G': 1, 'A': 1}
+    HIV-1 1643 G 15 ['A', 'A', 'A', 'a', 'a', 'g+1a', 'a', '*', 'A', 'a', 'g', 'A', 'A', 'a', 'A']
+    {'A': 7, 'a': 5, 'g+1a': 1, '*': 1, 'g': 1}
+    HIV-1 1644 A 15 ['A', 'A', 'A', 'a', 'a', 'a', 'a', 'A', 'A', 'a', 'a+2at', 'A', 'A', 'a', 'A']
+    {'A': 8, 'a': 6, 'a+2at': 1}
+    HIV-1 1645 T 15 ['T', 'T', 'T', 't', 't', 't', 't', 'T', 'T', 't', 't', 'T', 'T', 't', 'T']
+    {'T': 8, 't': 7}
+    HIV-1 1646 C 15 ['T', 'T', 'T', 't', 't', 't', 't', 'T', 'T', 't', 't', 'T', 'T', 't', 'T']
+    {'T': 8, 't': 7}
+    HIV-1 1647 T 15 ['T', 'T', 'T', 't', 't', 't', 't', 'T', 'T', 't', 't', 'T', 'T', 't', 'T']
+    {'T': 8, 't': 7}
+    HIV-1 1648 G 16 ['G', 'G', 'G', 'g', 'g', 'g', 'g', 'G', 'G', 'g', 'g', 'G', 'G', 'g', 'G', 'g']
+    {'G': 8, 'g': 8}
+
+    '''
     BASE = ['A','T','C','G']
     #print(chrom,pos,ref)
 
-    dict_all_temp = defaultdict(lambda:0)
+    dict_all = defaultdict(lambda:0)
     for item in query:
-        dict_all_temp[item.upper()] += 1
+        '''
+        {'A': 9, 'a': 5, 'g': 2} => {'A':14, 'G':2}
+        func upper() will trans 'g+1a' into 'G+1A'
 
-    dict_all = {}
-    for k,v in dict_all_temp.items():
-        dict_all[k] = v
-
+        {'A': 8, 'a': 6, 'a+2at': 1} => {'A':14, 'A+2AT':1}
+        '''
+        dict_all[item.upper()] += 1
     #print(dict_all)
 
     dict_alt = defaultdict(lambda:0) # store alt info
-    #print(dict_all.keys())
     # check if homo-ref or alt
     if len(dict_all.keys()) == 1:
+        # this pos has only one type base
         for k,v in dict_all.items():
             if k == ref:
                 # ref-homo
@@ -55,7 +80,7 @@ def parse_query(chrom,pos,ref,query):
             else:
                 pass
     else:
-        # has >= two allels
+        # has >= two alleles
         for k in dict_all:
         #print(k,ref)
             if k.upper() == ref:
@@ -64,7 +89,7 @@ def parse_query(chrom,pos,ref,query):
             else:
                 # alt base
                 if len(k) == 1:
-                    if k != '*':
+                    if k != '*': # skip *
                         # SNV
                         alt = k.upper()
                         var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
@@ -89,8 +114,8 @@ def parse_query(chrom,pos,ref,query):
                         if i in BASE:
                             alt_allele.append(i.upper())
 
-                    del_ref = "".join(alt_allele)
-                    del_alt = del_ref[0]
+                    del_ref = "".join(alt_allele) # GC
+                    del_alt = del_ref[0]          # G
                     var = "%s\t%s\t%s\t%s" % (chrom,pos,del_ref,del_alt)
                     dict_alt[var] += dict_all[k]
                 else:
@@ -103,7 +128,8 @@ def parse_query(chrom,pos,ref,query):
 def cal_depth(query):
     depth = 0
     for item in query:
-        depth += 1
+        if item != "*":
+            depth += 1
 
     return(depth)
 
@@ -142,11 +168,24 @@ def main():
             # cal depth
             col = pileupcol.reference_pos + 1 # 1-based
             t_chr = t.split(":")[0]
-            #print(t_chr,col,querybase)
             reg = t_chr + ':' + str(col) + '-' + str(col) # chr1:2-2
             ref_base = pysam_fa.fetch(region=reg).upper() # ref base
-            alt_dict = parse_query(t_chr,col,ref_base,querybase)
             depth = cal_depth(querybase)
+
+            #print(t_chr,col,ref_base,depth,querybase)
+            
+            '''
+            query_dict = {}
+            for b in querybase:
+                if b not in query_dict:
+                    query_dict[b] = 1;
+                else:
+                    query_dict[b] += 1;
+            print(query_dict)
+            '''
+
+            alt_dict = parse_query(t_chr,col,ref_base,querybase)
+            #depth = cal_depth(querybase)
 
             # output all alt allele
             for k in alt_dict:
