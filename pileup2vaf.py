@@ -102,23 +102,22 @@ def parse_query(chrom,pos,ref,query):
             elif '+' in k or '-' in k:
                 # Ins or Del
                 indel_info = parse_indel(k)
-                ref = indel_info[0]
-                alt = indel_info[1]
-                var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                ref_tmp = indel_info[0]
+                alt_tmp = indel_info[1]
+                var = "%s\t%s\t%s\t%s" % (chrom,pos,ref_tmp,alt_tmp)
                 dict_alt[var] = v
             else:
                 pass
     else:
         # has >= two alleles
         for k in dict_all:
-        #print(k,ref)
             if k.upper() == ref:
                 # skip ref
                 pass
             else:
                 # alt base
                 if len(k) == 1:
-                    if k != '*': # skip *
+                    if k != '*':
                         # SNV
                         alt = k.upper()
                         var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
@@ -128,9 +127,9 @@ def parse_query(chrom,pos,ref,query):
                     # 'C+4TACT' => VCF record is: chr pos C CTACT
                     # 'G-1C' => VCF record is: chr pos GC G
                     indel_info = parse_indel(k)
-                    ref = indel_info[0]
-                    alt = indel_info[1]
-                    var = "%s\t%s\t%s\t%s" % (chrom,pos,ref,alt)
+                    ref_tmp = indel_info[0]
+                    alt_tmp = indel_info[1]
+                    var = "%s\t%s\t%s\t%s" % (chrom,pos,ref_tmp,alt_tmp)
                     dict_alt[var] += dict_all[k]
                 else:
                     pass
@@ -196,8 +195,7 @@ def main():
             reg = t_chr + ':' + str(col) + '-' + str(col) # chr1:2-2
             ref_base = pysam_fa.fetch(region=reg).upper() # ref base
             real_depth = depth(querybase)
-            #print(t_chr,col,ref_base,my_dict)
-
+            
             total_base = len(querybase)
             del_base = del_depth(querybase)
             if total_base == del_base:
@@ -207,6 +205,7 @@ def main():
             #print(t_chr,col,ref_base,real_depth,querybase)
             
             alt_dict = parse_query(t_chr,col,ref_base,querybase)
+            #print(alt_dict)
 
             for k in alt_dict:
                 #print(k)
