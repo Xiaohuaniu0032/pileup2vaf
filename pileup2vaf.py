@@ -168,7 +168,7 @@ def main():
     # output file
     outfile = "%s/%s.variants.xls" % (options.outdir,options.name)
     of = open(outfile,'w')
-    h = ['Chr','Pos','Ref','Alt','AltNum','Depth','AltAlleleFrequency']
+    h = ['Sample','Chr','Pos','Ref','Alt','AltNum','Depth','AltAlleleFrequency']
     hh = '\t'.join(h)
     of.write(hh)
     of.write('\n')
@@ -211,7 +211,7 @@ def main():
                 #print(k)
                 alt_n = alt_dict[k] # alt reads number
                 freq = round(alt_n/real_depth,3)
-                v = "%s\t%s\t%s\t%s" % (k,alt_n,real_depth,freq)
+                v = "%s\t%s\t%s\t%s\t%s" % (options.name,k,alt_n,real_depth,freq)
                 of.write(v+'\n')
     of.close()
 
